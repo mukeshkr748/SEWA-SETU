@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import sqlite3
 
@@ -38,13 +40,12 @@ def init_db():
 
 init_db()
 
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 
 @app.get("/")
 def home():
-    return {
-        "message": "Welcome to Sewa Setu!",
-        "status": "running"
-    }
+    return FileResponse("static/index.html")
 
 
 @app.get("/health")
@@ -74,6 +75,7 @@ def create_complaint(complaint: Complaint):
     )
 
     complaint_id = cursor.lastrowid
+
     conn.commit()
     conn.close()
 

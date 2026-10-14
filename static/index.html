@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sewa Setu | Civic Complaint Portal</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        header {
+            background: #0f766e;
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+        }
+
+        header p {
+            margin: 0;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 30px auto;
+            padding: 0 16px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #0f766e;
+        }
+
+        label {
+            display: block;
+            margin: 15px 0 7px;
+            font-weight: bold;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background: #0f766e;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin-top: 18px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #115e59;
+        }
+
+        .complaint {
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid #0f766e;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 6px;
+            overflow-wrap: anywhere;
+        }
+
+        .message {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>🏙️ Sewa Setu</h1>
+        <p>Your Voice, Your City, Our Responsibility</p>
+    </header>
+
+    <main class="container">
+
+        <section class="card">
+            <h2>Register a Complaint</h2>
+            <p>Report civic problems in your area.</p>
+
+            <form id="complaintForm">
+
+                <label for="name">Your Name</label>
+                <input id="name" type="text" required
+                       placeholder="Enter your name">
+
+                <label for="category">Complaint Category</label>
+                <select id="category" required>
+                    <option value="">Select a category</option>
+                    <option value="Pothole">Road / Pothole</option>
+                    <option value="Garbage">Garbage</option>
+                    <option value="Water">Water Problem</option>
+                    <option value="Streetlight">Streetlight</option>
+                    <option value="Electricity">Electricity</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <label for="description">Complaint Description</label>
+                <textarea id="description" required
+                          placeholder="Describe the problem"></textarea>
+
+                <label for="location">Location</label>
+                <input id="location" type="text" required
+                       placeholder="e.g. Bhadra, Rajasthan">
+
+                <button type="submit">Submit Complaint</button>
+
+                <div id="message" class="message" role="status"></div>
+
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Registered Complaints</h2>
+            <button type="button" id="refreshButton">
+                Refresh Complaints
+            </button>
+            <div id="complaintsList">Loading complaints...</div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>© 2026 Sewa Setu | Building Better Communities</p>
+    </footer>
+
+    <script>
+        const form = document.getElementById("complaintForm");
+        const message = document.getElementById("message");
+        const complaintsList = document.getElementById("complaintsList");
+
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const complaint = {
+                name: document.getElementById("name").value.trim(),
+                category: document.getElementById("category").value,
+                description: document.getElementById("description").value.trim(),
+                location: document.getElementById("location").value.trim()
+            };
+
+            message.textContent = "Submitting complaint...";
+
+            try {
+                const response = await fetch("/complaints", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(complaint)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.detail || "Submission failed");
+                }
+
+                message.textContent =
+                    "Success! Complaint ID: " + result.complaint_id;
+
+                form.reset();
+                loadComplaints();
+
+            } catch (error) {
+                message.textContent =
+                    "Error: " + error.message +
+                    ". Please check that the server is running.";
+            }
+        });
+
+        async function loadComplaints() {
+            complaintsList.textContent = "Loading complaints...";
+
+            try {
+                const response = await fetch("/complaints");
+
+                if (!response.ok) {
+                    throw new Error("Could not load complaints");
+                }
+
+                const data = await response.json();
+                complaintsList.replaceChildren();
+
+                if (data.complaints.length === 0) {
+                    complaintsList.textContent = "No complaints registered yet.";
+                    return;
+                }
+
+                data.complaints.forEach(function (item) {
+                    const card = document.createElement("div");
+                    card.className = "complaint";
+
+                    const title = document.createElement("h3");
+                    title.textContent =
+                        "Complaint #" + item.id + " - " + item.category;
+
+                    const name = document.createElement("p");
+                    name.textContent = "Name: " + item.name;
+
+                    const description = document.createElement("p");
+                    description.textContent =
+                        "Description: " + item.description;
+
+                    const location = document.createElement("p");
+                    location.textContent = "Location: " + item.location;
+
+                    card.append(title, name, description, location);
+                    complaintsList.appendChild(card);
+                });
+
+            } catch (error) {
+                complaintsList.textContent =
+                    "Could not load complaints. Please check the server.";
+            }
+        }
+
+        document.getElementById("refreshButton")
+            .addEventListener("click", loadComplaints);
+
+        loadComplaints();
+    </script>
+
+</body>
+</html>
