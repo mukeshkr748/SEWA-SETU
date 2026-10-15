@@ -1,5 +1,8 @@
 venv/
 __pycache__/
 *.pyc
-sewa_setu.db
+*.db
 .env
+.pytest_cache/
+.mypy_cache/
+.DS_Store
