@@ -10,7 +10,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-DATABASE = "sewa_setu.db"
+DATABASE = "data/sewa_setu.db"
 
 
 class Complaint(BaseModel):
